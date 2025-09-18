@@ -13,12 +13,15 @@ def int_to_block(x, length):
    return x.to_bytes(length, byteorder="big")
 
 # The actual scrambling/descrambling step.
-def xor_bytes_enc(plaintext_block, keystream):
-   # https://www.reddit.com/r/learnpython/comments/zz76oc/how_would_i_xor_2_bytes_objects/
-    n = min(len(plaintext_block), len(keystream))
-    plaintext_bytes = bytes(plaintext_block, 'utf-8')
-    # string_b_bytes = bytes(b, 'utf-8')
-    return bytes(x ^ y for x, y in zip(plaintext_bytes[:n], keystream[:n]))
+def xor_bytes(data, keystream) -> bytes:
+    # https://www.reddit.com/r/learnpython/comments/zz76oc/how_would_i_xor_2_bytes_objects/
+
+    if isinstance(data, str):
+        data = data.encode("utf-8")
+    if isinstance(keystream, str):
+        keystream = keystream.encode("utf-8")
+
+    return bytes(d ^ k for d, k in zip(data, keystream[:len(data)]))
 
 # def xor_bytes_c(ciphertext_block,keystream):
 #     n = min(len(ciphertext_block), n(keystream))
@@ -38,7 +41,7 @@ def encrypt(message_plaintext, key):
     blocksize = 16
 
     # Generate number used only once
-    nonce = os.urandom(blocksize)
+    # nonce = os.urandom(blocksize)
 
     # Encrypt using AES library
     aes_ecb = AES.new(key, AES.MODE_ECB)
@@ -55,7 +58,7 @@ def encrypt(message_plaintext, key):
             # add the counter value an put it together with the nonce
             counter_bytes = int_to_block(counter + block_index, blocksize)
             index_split = (blocksize//2)
-            counter_block = nonce[:index_split] + counter_bytes[index_split:]
+            counter_block = key[:index_split] + counter_bytes[index_split:]
 
             # encrypt the counter block with aes
             keystream = aes_ecb.encrypt(counter_block)
@@ -66,14 +69,14 @@ def encrypt(message_plaintext, key):
             plaintext_block = message_plaintext[start_byte:end_byte]
             
             #XOR keystream with plaintet block
-            cyphertext_block = xor_bytes_enc(plaintext_block, keystream[:len(plaintext_block)])
+            cyphertext_block = xor_bytes(plaintext_block, keystream[:len(plaintext_block)])
 
             cyphertext.extend(cyphertext_block)
 
             #increment the counter
             counter = increment_counter(counter) 
     
-    return bytes(cyphertext), nonce
+    return bytes(cyphertext), key
 
 
 # 3 Decrypt()
@@ -89,6 +92,7 @@ if __name__ == "__main__":
     #Testing 1
     # Message
     raw_message = "Toto je elektro ty obmedzeny kokotko"
+    print("Raw message")
     
     #KeyGen()
     key = keygen()
