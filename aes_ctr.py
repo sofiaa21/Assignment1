@@ -23,11 +23,6 @@ def xor_bytes(data, keystream) -> bytes:
 
     return bytes(d ^ k for d, k in zip(data, keystream[:len(data)]))
 
-# def xor_bytes_c(ciphertext_block,keystream):
-#     n = min(len(ciphertext_block), n(keystream))
-#     return bytes(x ^ y for x, y in zip(ciphertext_block[:n], keystream[:n]))
-
-
 def increment_counter(counter):
    # moves the bits to the left
    shift = (1 << 128) - 1
@@ -52,6 +47,7 @@ def encrypt(message_plaintext, key):
     counter = 0
     cyphertext = bytearray()
 
+    # Count all the full chunks, and if there’s even one byte left, count one more.”
     number_of_blocks = (total_length + blocksize - 1) // blocksize 
     for block_index in range(number_of_blocks):
 
@@ -60,7 +56,7 @@ def encrypt(message_plaintext, key):
             index_split = (blocksize//2)
             counter_block = key[:index_split] + counter_bytes[index_split:]
 
-            # encrypt the counter block with aes
+            # create primitive AES machine and encrypt the counter block
             keystream = aes_ecb.encrypt(counter_block)
 
             # Get plaintext block to be encrypted
@@ -71,6 +67,7 @@ def encrypt(message_plaintext, key):
             #XOR keystream with plaintet block
             cyphertext_block = xor_bytes(plaintext_block, keystream[:len(plaintext_block)])
 
+            # Add cyphertext block to cyphertext
             cyphertext.extend(cyphertext_block)
 
             #increment the counter
@@ -91,8 +88,8 @@ if __name__ == "__main__":
     
     #Testing 1
     # Message
-    raw_message = "Toto je elektro ty obmedzeny kokotko"
-    print("Raw message")
+    raw_message = "This is real this is me I'm exactly where I'm supposed to be now..."
+    print(f"Raw message: {raw_message}")
     
     #KeyGen()
     key = keygen()
@@ -105,4 +102,12 @@ if __name__ == "__main__":
 
     # decryption
     decrypted_message = decrypt(encrypted_message, key)
-    print(f"Decrypted message: {decrypted_message}")
+    print(f"Decrypted message: {decrypted_message[0]}")
+    print("Key used: ", key)
+
+    # Parse decoded message from bytes -> string
+    decoded_message_as_string = decrypted_message[0].decode(encoding="utf-8")
+    if decoded_message_as_string == raw_message:
+        print("Decryption: success")
+    else:
+        print(f"Decryption: fail \n  Raw message: {raw_message} \n  Decrypted message: {str(decrypted_message[0])}")
