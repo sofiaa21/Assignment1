@@ -73,14 +73,14 @@ def encrypt(message_plaintext, key):
             #increment the counter
             counter = increment_counter(counter) 
     
-    return bytes(cyphertext), key
+    return bytes(cyphertext)
 
 
 # 3 Decrypt()
 def decrypt(ciphertext,key):
     #since decrypt is symmetrical, the same method should work for this
-    plaintext, nonce = encrypt(ciphertext, key)
-    return plaintext, nonce
+    plaintext = encrypt(ciphertext, key)
+    return plaintext
 
 
 
@@ -95,19 +95,18 @@ if __name__ == "__main__":
     key = keygen()
 
     #encryption
-    encrypted_message, nonce_used = encrypt(raw_message, key)
+    encrypted_message = encrypt(raw_message, key)
     
-    print(f"Encrypted message (first 100 chars): {encrypted_message[:100]}")
-    print(f"Encrypted message (first 100 chars) in hex vals: {encrypted_message[:100].hex()}")
+    print(f"Encrypted message: {encrypted_message}")
 
     # decryption
     decrypted_message = decrypt(encrypted_message, key)
-    print(f"Decrypted message: {decrypted_message[0]}")
+    print(f"Decrypted message: {decrypted_message}")
     print("Key used: ", key)
 
     # Parse decoded message from bytes -> string
-    decoded_message_as_string = decrypted_message[0].decode(encoding="utf-8")
+    decoded_message_as_string = decrypted_message.decode(encoding="utf-8")
     if decoded_message_as_string == raw_message:
         print("Decryption: success")
     else:
-        print(f"Decryption: fail \n  Raw message: {raw_message} \n  Decrypted message: {str(decrypted_message[0])}")
+        print(f"Decryption: fail \n  Raw message: {raw_message} \n  Decrypted message: {str(decrypted_message)}")
