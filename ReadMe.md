@@ -6,10 +6,11 @@ AES-CTR IND-CCA Assignment
       - pycryptodome library for AES block cipher operations
 
       - Install prerequisites with:
-
+    ```sh
         sudo apt update
         sudo apt install python3 python3-pip
         pip3 install pycryptodome
+    ```
 
 - Files
   - aes_ctr.py: Implements AES-CTR encryption, decryption, and key generation.
@@ -17,8 +18,9 @@ AES-CTR IND-CCA Assignment
 
 - Running the Tests
     To run the correctness and IND-CCA attack tests, execute:
+  ```sh
     python3 ind-cca_test.py
-
+  ```
   - Expected output:
     The script prints the original message, ciphertext, modified ciphertext, and decrypted outputs.
     For both test cases, the IND-CCA attack should succeed, demonstrating that CTR mode is not IND-CCA secure.
