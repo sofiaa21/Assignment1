@@ -1,42 +1,66 @@
-import aes_ctr as aes_ctr
+import aes_ctr
 
-def perform_attack(ciphertext, original_byte, desired_flipped_value, plaintext):
-  
-    ciphertext = bytearray(ciphertext)  # make mutable
-    original_ord = ord(original_byte)
-    desired_ord = ord(desired_flipped_value)
+def try_api():
+    if hasattr(aes_ctr, "encrypt") and hasattr(aes_ctr, "decrypt"):
+        def enc(p,key):
+                return aes_ctr.encrypt(p,key)
+        def dec(c, key):
+                return aes_ctr.decrypt(c, key)
+        return enc, dec
 
-    # Iterate over all bytes in plaintext
-    for i, p_byte in enumerate(plaintext.encode()):  # convert plaintext to bytes
-        if p_byte == original_ord:
-            # compute mask and flip ciphertext byte
-            d_mask = original_ord ^ desired_ord
-            ciphertext[i] ^= d_mask
+def flip_byte_in_ciphertext(ct, idx=16):
+    if idx >= len(ct):
+        raise IndexError(f"Index {idx} out of range for ciphertext of length {len(ct)}")
+    b = bytearray(ct)
+    b[idx] ^= 1  # flip least significant bit of chosen byte
+    return bytes(b)
 
-    return bytes(ciphertext)
+def ind_cca_ctr_test():
+    enc, dec = try_api()
 
+    # Choose two challenge messages of same length that differ in a predictable way.
+    m0 = bytes([0]*16)  #all zeros
+    m1 = bytes([0]*16) #all zeros
+    m1 = bytearray(m1); m1[0] = 1 #first byte is 1
+    m1 = bytes(m1)  #convert back to bytes
+
+    for actual_b, m in [(0, m0), (1, m1)]:
+        print("\n=== Test case: b = {} ===".format(actual_b))
+        print("Original message (m):", m.hex())
+
+        key = aes_ctr.keygen()
+        print("Generated key:", key.hex() if hasattr(key, 'hex') else key)
+
+        c_star = enc(m, key) #challenge ciphertext
+        print("Ciphertext (c_star):", c_star.hex())
+        print("Challenge ciphertext length:", len(c_star))
+
+        # Attacker now modifies c* to get c' (allowed under CCA since c' != c*)
+        c_prime = flip_byte_in_ciphertext(c_star, idx=0)    #modified ciphertext
+        print("Modified ciphertext (c_prime):", c_prime.hex())
+        print("Difference at first byte : c_star[0]={}, c_prime[0]={}".format(c_star[0], c_prime[0]))
+
+        if c_prime == c_star:
+            raise RuntimeError("c' should differ from c* (unexpected).")
+
+        m_prime = dec(c_prime, key)
+
+        # m_prime = m XOR delta  where delta is the same bit flipped in ciphertext.
+        # Because we flipped the first byte LSB, we can check byte 0 to distinguish.
+        guessed_b = 0 if (m_prime[0] & 1) else 1
+        print("Actual b:", actual_b, "Recovered guess:", guessed_b)
+
+        assert guessed_b == actual_b, "Attack failed for case b = {}".format(actual_b)
+
+        print("Original message (m):", m.hex())
+        print("Decrypted original message (should match m):", dec(c_star, key).hex())
+
+        # Now ask the decryption oracle to decrypt c' (allowed under CCA since c' != c*)
+        print("Decrypted modified message (m_prime):", m_prime.hex())
+        print("m_prime[0]:", m_prime[0])
+
+
+    print("\nIND-CCA attack on CTR succeeded for both test messages.")
 
 if __name__ == "__main__":
-    # Message
-    print("We will be using a string that in reality could carry important information and tampering/bit flipping would have serious consequences.")
-    
-    raw_message = "userid=123;username=test;admin=0"
-    print(f"Raw message: {raw_message}")
-    print("---------------------------------------------------------------------------------------")
-
-    # AES-CTR encryption
-    key = aes_ctr.keygen()
-    encrypted_message = aes_ctr.encrypt(raw_message, key)
-    
-    #Attack
-    print("Our goal is to bit flip the admin=0 -> admin=1, thus to alleviate authorization.")
-    print("For this we will locate the bit 0 and try to change it to 1 using XOR mask.")
-    print("---------------------------------------------------------------------------------------")
-    
-    altered_message = perform_attack(encrypted_message,"0","1",raw_message)
-
-    # Decrypt the altered message
-    print("Checking decrypted altered message")
-    encrypted_message = aes_ctr.encrypt(raw_message, key)
-    decrypted_altered_message = aes_ctr.decrypt(altered_message, key)
-    print(decrypted_altered_message)
+    ind_cca_ctr_test()
