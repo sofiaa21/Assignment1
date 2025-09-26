@@ -56,6 +56,7 @@ def decrypt(ciphertext, key):
 
 if __name__ == "__main__":
     # Example usage and test
+    print("\n================ AES-CTR Basic Functionality Test ================\n")
     raw_message = "comment=hello;userdata=abc;admin=0;end"
     print(f"Raw message: {raw_message}")
     key = keygen()
@@ -66,3 +67,4 @@ if __name__ == "__main__":
     print("Key used: ", key)
     decoded_message_as_string = decrypted_message.decode("utf-8")
     print("Decryption: success" if decoded_message_as_string == raw_message else f"Decryption: fail \n  Raw message: {raw_message} \n  Decrypted message: {str(decrypted_message)}")
+    print("\n================ End AES-CTR Basic Functionality Test ================\n")

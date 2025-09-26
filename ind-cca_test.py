@@ -16,6 +16,7 @@ def flip_byte_in_ciphertext(ct, idx=16):
     return bytes(b)
 
 def ind_cca_ctr_test():
+    print("\n================ IND-CCA Attack Test on AES-CTR ================\n")
     enc, dec = try_api()
 
     # Choose two challenge messages of same length that differ in a predictable way.
@@ -25,7 +26,7 @@ def ind_cca_ctr_test():
     m1 = bytes(m1)  #convert back to bytes
 
     for actual_b, m in [(0, m0), (1, m1)]:
-        print("\n=== Test case: b = {} ===".format(actual_b))
+        print("\n--- IND-CCA Test Case: b = {} ---".format(actual_b))
         print("Original message (m):", m.hex())
 
         key = aes_ctr.keygen()
@@ -38,7 +39,7 @@ def ind_cca_ctr_test():
         # Attacker now modifies c* to get c' (allowed under CCA since c' != c*)
         c_prime = flip_byte_in_ciphertext(c_star, idx=16)    #modified ciphertext
         print("Modified ciphertext (c_prime):", c_prime.hex())
-        print("Difference at first byte : c_star[0]={}, c_prime[0]={}".format(c_star[0], c_prime[0]))
+        print("Difference at first byte (nonce excluded) : c_star[16]={}, c_prime[16]={}".format(c_star[16], c_prime[16]))
 
         if c_prime == c_star:
             raise RuntimeError("c' should differ from c* (unexpected).")
@@ -58,9 +59,9 @@ def ind_cca_ctr_test():
         # Now ask the decryption oracle to decrypt c' (allowed under CCA since c' != c*)
         print("Decrypted modified message (m_prime):", m_prime.hex())
         print("m_prime[0]:", m_prime[0])
+        print("--- End of IND-CCA Test Case: b = {} ---\n".format(actual_b))
 
-
-    print("\nIND-CCA attack on CTR succeeded for both test messages.")
+    print("================ End IND-CCA Attack Test on AES-CTR ================\n")
 
 if __name__ == "__main__":
     ind_cca_ctr_test()
