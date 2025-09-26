@@ -1,5 +1,5 @@
-AES-CTR IND-CCA Assignment
---------------------------------------------
+
+# AES-CTR IND-CCA Assignment
 
 ## Compilation and Installation
 
@@ -7,108 +7,55 @@ AES-CTR IND-CCA Assignment
 - Python 3.8+
 - `pycryptodome` library for AES block cipher operations
 
-Install prerequisites with:
-```sh
-sudo apt update
-sudo apt install python3 python3-pip
-pip3 install pycryptodome
-```
+# AES-CTR IND-CCA Assignment
 
-## Files
-- `aes_ctr.py`: Implements AES-CTR encryption, decryption, and key generation.
-- `ind-cca_test.py`: Contains tests for correctness and IND-CCA attack.
-
-## Running the Tests
-
-To run the correctness and IND-CCA attack tests, execute:
-```sh
-python3 ind-cca_test.py
-```
-Expected output:
-- The script prints the original message, ciphertext, modified ciphertext, and decrypted outputs.
-- For both test cases, the IND-CCA attack should succeed, demonstrating that CTR mode is not IND-CCA secure.
-
-The output should end with:
-```
-IND-CCA attack on CTR succeeded for both test messages.
-```
-
----------------------------------------------------------------------------------------------
-
-## General Approach
-
-### Key Generation
-
-A random 128-bit AES key is generated using `os.urandom`:
-```python
-import os
-def keygen():
-    return os.urandom(16)
-```
-
-### Nonce Generation
-
-For each encryption, a random 128-bit nonce is generated and prepended to the ciphertext:
-```python
-nonce = os.urandom(16)
-```
-
-### Encryption (CTR mode)
-
-The plaintext is split into 16-byte blocks. For each block, a counter is combined with the nonce to form the input to AES-CTR, producing a keystream block. The plaintext block is XORed with the keystream block to produce ciphertext.
-
-```python
-def encrypt(message_plaintext, key):
-    ...
-```
-
-### Decryption
-
-Decryption is identical to encryption (CTR mode is symmetric):
-
-```python
-def decrypt(ciphertext, key):
-    ...
-```
-
-### Testing
-
-The IND-CCA test script creates two messages, encrypts them, modifies the ciphertext, and demonstrates that the attack can distinguish which message was encrypted.
-
----------------------------------------------------------------------------------------------
-
-## IND-CCA Attack Description
-
-CTR mode is malleable: flipping a bit in the ciphertext flips the same bit in the decrypted plaintext. The test script demonstrates this by modifying the ciphertext and using the decryption oracle to distinguish which message was encrypted, showing that AES-CTR is not IND-CCA secure.
-
-## How it works 
-
-1. Challenge Phase: The attacker chooses two messages (`m0`, `m1`) of the same length that differ in a known way (e.g., one byte is different).
-2. Encryption Oracle: The challenger randomly selects one of the messages and encrypts it, returning the ciphertext (`c*`) to the attacker.
-3. Ciphertext Modification: The attacker modifies `c*` by flipping a bit in the ciphertext (e.g., flipping the least significant bit of the first byte).
-4. Decryption Oracle: The attacker submits the modified ciphertext (`c'`) to the decryption oracle, which returns the decrypted plaintext (`m'`).
-5. Distinguishing Because CTR mode is malleable, the attacker can observe which bit was flipped in the decrypted message and thus determine which original message was encrypted.
-
-### Implementation in `ind-cca_test.py`
-
-- The test script creates two messages:
-  ```python
-  m0 = bytes([0]*16)  # all zeros
-  m1 = bytes([1] + [0]*15)  # first byte is 1, rest are zeros
+## Setup & Installation
+- Requires Python 3.8+ and `pycryptodome`.
+- For Ubuntu 24.04, use Docker for easiest setup:
+  ```sh
+  docker build -t cryptography-assignment1 .
+  docker run --rm cryptography-assignment1
   ```
-- It encrypts one of them and gets the ciphertext.
-- It flips the least significant bit of the first byte of the ciphertext (after the nonce).
-  
-  ```python
-  c_prime = flip_byte_in_ciphertext(c_star, idx=16)
+This will automatically install all dependencies and run both the test for aes_ctr implementation and the IND-CCA test script.
+
+## Running the tests and interpreting the Output
+After building the docker the tests can be ran with the `docker run --rm cryptography-assignment1`  command. Afterwards, the following printouts should be available for intepretation.
+
+#### AES - CTR Implementation
+- The test prints message in all its forms: plaintext (raw), ciphertext (encrypted message) and the decryption. Additionaly it also prints the key and the final assert returns whether the string versions of the original plaintext and the decrypted message match.
+- The output should look like this:
   ```
-- It decrypts the modified ciphertext and checks the first byte to see which message was encrypted.
-
-  ```python
-  m_prime = dec(c_prime, key)
-  guessed_b = 0 if (m_prime[0] & 1) else 1
+  Raw message: comment=hello;userdata=abc;admin=0;end
+  Encrypted message: b'\x17|9E\xf3\xf3\xe6M<\xaf\x9c\n\r\x8dul\x15nA\xb1i\xf4\xbc\x7f\x1e\xbb4\x10Y\r\xc2\xff8y0\x90\xad\xe4\xfe\xe0t\xfb}\x1c\xb2\xccZ\xfb\xae\x1c\xc7\x11\x0b\x08'
+  Decrypted message: b'comment=hello;userdata=abc;admin=0;end'
+  Key used:  b'\x87\xd1zC~s\x06c<\xa5\xfa\xc7<gC4'
+  Decryption: success
   ```
-- If the guess matches the actual message, the attack succeeds.
 
-This demonstrates that AES-CTR is not IND-CCA secure because the attacker can reliably distinguish which message was encrypted by exploiting the malleability of CTR mode.
-
+#### IND - CCA Attack
+- The script prints the original message, ciphertext, modified ciphertext, and decrypted outputs for each test case.
+- Example on what the output should look like for test case where the flipped bit is: 0:
+  ```
+  Original message (m): 00000000000000000000000000000000
+  Generated key: 8808f9fcd2295a579e6f64da038a7ccf
+  Ciphertext (c_star): 39e51b2927dbf735c408236b88e308cbc10db14e02a0b5ffb06db654d737d4fe
+  Challenge ciphertext length: 32
+  ```
+- For both test cases, the attack should succeed, demonstrating that CTR mode is not IND-CCA secure.
+We should also be able to observe the change in the modified message
+  ```
+    Modified ciphertext (c_prime): 39e51b2927dbf735c408236b88e308cbc00db14e02a0b5ffb06db654d737d4fe
+  ```
+  (Hint) Notice the difference after cbc -> flipped bit 
+- The change in bits can also be observed in the output
+  ```
+    Difference at first byte (nonce excluded) : c_star[16]=193, c_prime[16]=192
+    Actual b: 0 Recovered guess: 0
+    Original message (m): 00000000000000000000000000000000
+    Decrypted original message (should match m): 00000000000000000000000000000000
+  ```
+- Finally we should be able to observe the modified message + the flipped bit
+  ```
+    Decrypted modified message (m_prime): 01000000000000000000000000000000
+    m_prime[0]: 1
+  ```
