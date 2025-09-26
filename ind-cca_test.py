@@ -36,7 +36,7 @@ def ind_cca_ctr_test():
         print("Challenge ciphertext length:", len(c_star))
 
         # Attacker now modifies c* to get c' (allowed under CCA since c' != c*)
-        c_prime = flip_byte_in_ciphertext(c_star, idx=0)    #modified ciphertext
+        c_prime = flip_byte_in_ciphertext(c_star, idx=16)    #modified ciphertext
         print("Modified ciphertext (c_prime):", c_prime.hex())
         print("Difference at first byte : c_star[0]={}, c_prime[0]={}".format(c_star[0], c_prime[0]))
 
